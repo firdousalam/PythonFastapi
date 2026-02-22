@@ -25,7 +25,13 @@ def get_products():
 #   'http://127.0.0.1:8000/productsByName?name=tv' \
 #   -H 'accept: application/json'
 @app.get("/productsByName")
-def get_product_by_name(name: str = Query(default=None, min_length=1, max_length=20, description="search product by name")):
+def get_product_by_name(
+    name: str = Query(
+        default=None, min_length=1, max_length=20, description="search product by name"),
+    limit: int = Query(
+        default=2, ge=1, le=5, description="please provide limit for pagination"),
+    offset: int = Query(default=0, ge=0, description="pagination offset")
+):
     products = get_products()
     if name:
         needle = name.strip().lower()
@@ -35,5 +41,7 @@ def get_product_by_name(name: str = Query(default=None, min_length=1, max_length
         raise HTTPException(
             status_code=404, detail=f"Product not found with name={name}")
 
+    products = sorted(products, key=lambda p: p.get("id", 0), reverse=True)
     product_length = len(products)
-    return {"total": product_length, "products": products}
+    products = products[offset:offset+limit]
+    return {"total": product_length, "limit": limit, "offset": offset, "products": products}
