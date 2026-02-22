@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Path
 from service.products import get_all_products
 
 app = FastAPI()
@@ -31,6 +31,7 @@ def get_product_by_name(
     limit: int = Query(
         default=2, ge=1, le=5, description="please provide limit for pagination"),
     offset: int = Query(default=0, ge=0, description="pagination offset")
+
 ):
     products = get_products()
     if name:
@@ -45,3 +46,10 @@ def get_product_by_name(
     product_length = len(products)
     products = products[offset:offset+limit]
     return {"total": product_length, "limit": limit, "offset": offset, "products": products}
+
+
+@app.get("/productsByProductID/{product_id}")
+def get_product(product_id: int = Path(..., min=1, max=1000000, description="id must be 10 digit long", example=1234567890)):
+    print(f"product_id {product_id}")
+    products = get_all_products()
+    return [p for p in products if p["id"] == product_id][0]
